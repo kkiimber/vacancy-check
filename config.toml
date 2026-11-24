@@ -1,0 +1,7 @@
+url = "http://opendata.trudvsem.ru/api/v1/vacancies/region/39"
+page_size = 100
+max_vacancies = 200
+timeout = 30
+out = "reports/latest.json"
+ai = "gigachat"
+cache = ".cache/ai.json"

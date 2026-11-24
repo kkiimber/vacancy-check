@@ -1,0 +1,35 @@
+name: analyze-vacancies
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+    inputs:
+      max_vacancies:
+        description: Максимум вакансий
+        default: "200"
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Корневой сертификат Минцифры
+        run: curl -fsSL -o russian_ca.pem https://gu-st.ru/content/lending/russian_trusted_root_ca_pem.crt
+      - name: Анализ вакансий
+        env:
+          GIGACHAT_CREDENTIALS: ${{ secrets.GIGACHAT_CREDENTIALS }}
+          GIGACHAT_CA_BUNDLE: russian_ca.pem
+          AI_MODE: ${{ secrets.GIGACHAT_CREDENTIALS != '' && 'gigachat' || 'none' }}
+          MAX_VACANCIES: ${{ inputs.max_vacancies || '200' }}
+        run: python -m vacancy_check --ai "$AI_MODE" --max "$MAX_VACANCIES" --out reports/latest.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vacancy-report
+          path: reports/latest.json
+          if-no-files-found: ignore
